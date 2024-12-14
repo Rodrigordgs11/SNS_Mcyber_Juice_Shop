@@ -1,0 +1,9 @@
+{
+    "name": "jzonwebtoken",
+    "version": "1.0.0",
+    "description": "A fake implementation of JSON Web Token (JWT) signing.",
+    "main": "index.js",
+    "keywords": ["jwt", "fake", "jsonwebtoken", "security"],
+    "author": "Rodrigo Rodrigues",
+    "license": "MIT"
+  }  

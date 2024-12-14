@@ -1,0 +1,14 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 2
+    },
+    "auditLog": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs/.audit.json",
+    "files": [
+        {
+            "date": 1734206477577,
+            "name": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs\\access.log.2024-12-14",
+            "hash": "3ee92d4c6997b05f032da63279fef1df"
+        }
+    ]
+}

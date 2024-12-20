@@ -46,8 +46,8 @@ module.exports = function login() {
         basket_1.BasketModel.findOrCreate({ where: { UserId: user.data.id } })
             .then(([basket]) => {
             const token = security.authorize(user);
-            const fake_token = security.fakeAuthorize(user); // vuln-code-snippet vuln-line fakeJwtToken
-            console.log('fake_token: ' + fake_token); // vuln-code-snippet vuln-line fakeJwtToken
+            const fake_token = security.fakeAuthorize(user); 
+            console.log('fake_token: ' + fake_token);
             user.bid = basket.id; // keep track of original basket
             security.authenticatedUsers.put(token, user);
             res.json({ authentication: { token, bid: basket.id, umail: user.data.email } });

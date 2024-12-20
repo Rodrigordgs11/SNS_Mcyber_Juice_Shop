@@ -6,9 +6,14 @@
     "auditLog": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs/.audit.json",
     "files": [
         {
-            "date": 1734206477577,
-            "name": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs\\access.log.2024-12-14",
-            "hash": "3ee92d4c6997b05f032da63279fef1df"
+            "date": 1734610934944,
+            "name": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs\\access.log.2024-12-19",
+            "hash": "1ae6b10a3513829363daa6873a89997b"
+        },
+        {
+            "date": 1734701704913,
+            "name": "C:\\Users\\RodrigoRodrigues\\Desktop\\juice-shop_17.1.1\\logs\\access.log.2024-12-20",
+            "hash": "8009464e9934883b8f4231a8d1eeb2ba"
         }
     ]
 }

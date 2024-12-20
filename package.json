@@ -170,6 +170,7 @@
     "portscanner": "^2.2.0",
     "prom-client": "^14.1.0",
     "pug": "^3.0.0",
+    "re2": "^1.21.4",
     "replace": "^1.2.0",
     "request": "^2.88.2",
     "sanitize-filename": "^1.6.3",

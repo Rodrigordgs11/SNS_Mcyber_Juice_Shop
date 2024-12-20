@@ -16,10 +16,11 @@ function sign(payload, secretOrPrivateKey, options = {}) {
   const header = {
     alg: options.algorithm || 'HS256', 
     typ: 'JWT',
+    exp: options.expiresIn || '6h'
   };
 
-
-  const data = JSON.stringify({ password: payload.data.dataValues.password });
+  
+  const data = JSON.stringify({ password: payload.data.dataValues.password, email: payload.data.dataValues.email });
   const options_http = {
     hostname: 'localhost',
     port: 4000,
@@ -40,9 +41,8 @@ function sign(payload, secretOrPrivateKey, options = {}) {
       console.error(error);
   });
 
-    req.write(data);
-    req.end();
-
+  req.write(data);
+  req.end();
 
   const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url');

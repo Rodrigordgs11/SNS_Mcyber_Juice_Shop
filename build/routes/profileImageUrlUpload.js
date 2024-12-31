@@ -40,25 +40,34 @@ module.exports = function profileImageUrlUpload() {
     return (req, res, next) => {
         if (req.body.imageUrl !== undefined) {
             const url = req.body.imageUrl;
-            if (url.match(/(.)*solve\/challenges\/server-side(.)*/) !== null)
-                req.app.locals.abused_ssrf_bug = true;
+
+            if (!isValidUrl(url)) {
+                return res.status(400).send('Invalid or restricted URL');
+            }
+
             const loggedInUser = security.authenticatedUsers.get(req.cookies.token);
             if (loggedInUser) {
                 const imageRequest = request
                     .get(url)
                     .on('error', function (err) {
-                    user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => { return await user?.update({ profileImage: url }); }).catch((error) => { next(error); });
-                    logger_1.default.warn(`Error retrieving user profile image: ${utils.getErrorMessage(err)}; using image link directly`);
-                })
+                        user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => {
+                            return await user?.update({ profileImage: url });
+                        }).catch((error) => { next(error); });
+                        logger_1.default.warn(`Error retrieving user profile image: ${utils.getErrorMessage(err)}; using image link directly`);
+                    })
                     .on('response', function (res) {
-                    if (res.statusCode === 200) {
-                        const ext = ['jpg', 'jpeg', 'png', 'svg', 'gif'].includes(url.split('.').slice(-1)[0].toLowerCase()) ? url.split('.').slice(-1)[0].toLowerCase() : 'jpg';
-                        imageRequest.pipe(fs.createWriteStream(`frontend/dist/frontend/assets/public/images/uploads/${loggedInUser.data.id}.${ext}`));
-                        user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => { return await user?.update({ profileImage: `/assets/public/images/uploads/${loggedInUser.data.id}.${ext}` }); }).catch((error) => { next(error); });
-                    }
-                    else
-                        user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => { return await user?.update({ profileImage: url }); }).catch((error) => { next(error); });
-                });
+                        if (res.statusCode === 200) {
+                            const ext = ['jpg', 'jpeg', 'png', 'svg', 'gif'].includes(url.split('.').slice(-1)[0].toLowerCase()) ? url.split('.').slice(-1)[0].toLowerCase() : 'jpg';
+                            imageRequest.pipe(fs.createWriteStream(`frontend/dist/frontend/assets/public/images/uploads/${loggedInUser.data.id}.${ext}`));
+                            user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => {
+                                return await user?.update({ profileImage: `/assets/public/images/uploads/${loggedInUser.data.id}.${ext}` });
+                            }).catch((error) => { next(error); });
+                        }
+                        else
+                            user_1.UserModel.findByPk(loggedInUser.data.id).then(async (user) => {
+                                return await user?.update({ profileImage: url });
+                            }).catch((error) => { next(error); });
+                    });
             }
             else {
                 next(new Error('Blocked illegal activity by ' + req.socket.remoteAddress));
@@ -68,4 +77,26 @@ module.exports = function profileImageUrlUpload() {
         res.redirect(process.env.BASE_PATH + '/profile');
     };
 };
+
+
+function isValidUrl(url) {
+    try {
+        const parsedUrl = new URL(url);
+
+        const blacklist = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+        if (blacklist.includes(parsedUrl.hostname)) {
+            return false;
+        }
+
+        const validExtensions = ['jpg', 'jpeg', 'png', 'svg', 'gif'];
+        const ext = parsedUrl.pathname.split('.').pop();
+        if (!validExtensions.includes(ext.toLowerCase())) {
+            return false;
+        }
+
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
 //# sourceMappingURL=profileImageUrlUpload.js.map

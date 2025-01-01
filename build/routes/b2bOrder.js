@@ -33,24 +33,26 @@ const utils = __importStar(require("../lib/utils"));
 const datacache_1 = require("../data/datacache");
 const security = require('../lib/insecurity');
 const safeEval = require('notevil');
+const RE2 = require("re2");
 module.exports = function b2bOrder() {
     return ({ body }, res, next) => {
         if (utils.isChallengeEnabled(datacache_1.challenges.rceChallenge) || utils.isChallengeEnabled(datacache_1.challenges.rceOccupyChallenge)) {
             const orderLinesData = body.orderLinesData || '';
+            if (!isValidOrderLinesData(orderLinesData)) {
+                return res.status(400).send('Invalid or potentially harmful orderLinesData.');
+            }
             try {
-                const sandbox = { safeEval, orderLinesData };
-                vm.createContext(sandbox);
-                vm.runInContext('safeEval(orderLinesData)', sandbox, { timeout: 2000 });
-                res.json({ cid: body.cid, orderNo: uniqueOrderNumber(), paymentDue: dateTwoWeeksFromNow() });
+                const processedData = sanitizeOrderLinesData(orderLinesData);
+                res.json({ cid: body.cid, orderNo: uniqueOrderNumber(), paymentDue: dateTwoWeeksFromNow(), processedData });
             }
             catch (err) {
-                if (utils.getErrorMessage(err).match(/Script execution timed out.*/) != null) {
-                    challengeUtils.solveIf(datacache_1.challenges.rceOccupyChallenge, () => { return true; });
+                if (err.message.match(/Script execution timed out.*/) !== null) {
+                    solveIf(rceOccupyChallenge, () => true);
                     res.status(503);
                     next(new Error('Sorry, we are temporarily not available! Please try again later.'));
                 }
                 else {
-                    challengeUtils.solveIf(datacache_1.challenges.rceChallenge, () => { return utils.getErrorMessage(err) === 'Infinite loop detected - reached max iterations'; });
+                    solveIf(rceChallenge, () => err.message === 'Infinite loop detected - reached max iterations');
                     next(err);
                 }
             }
@@ -64,6 +66,16 @@ module.exports = function b2bOrder() {
     }
     function dateTwoWeeksFromNow() {
         return new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)).toISOString();
+    }
+    function isValidOrderLinesData(data) {
+        const disallowedPatterns = [
+            new RE2('^/\\(\\(a\\+\\)\\+\\)b/'),
+            new RE2('[\\s\\S]*(eval|Function|setTimeout|setInterval|exec)[\\s\\S]*')
+        ];
+        return !disallowedPatterns.some(pattern => pattern.test(data));
+    }
+    function sanitizeOrderLinesData(data) {
+        return data.replace(/[<>]/g, '');
     }
 };
 //# sourceMappingURL=b2bOrder.js.map

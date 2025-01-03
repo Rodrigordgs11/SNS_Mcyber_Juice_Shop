@@ -113,6 +113,8 @@
     ]
   },
   "dependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.2",
     "check-dependencies": "^1.1.0",
     "check-internet-connected": "^2.0.6",

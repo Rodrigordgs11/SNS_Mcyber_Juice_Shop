@@ -33,6 +33,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const models = require("../models/index");
 const basket_1 = require("../models/basket");
 const user_1 = require("../models/user");
+const bcrypt_1 = __importDefault(require("bcrypt"));
 const challengeUtils = require("../lib/challengeUtils");
 const config_1 = __importDefault(require("config"));
 const datacache_1 = require("../data/datacache");
@@ -57,30 +58,39 @@ module.exports = function login() {
     }
     return (req, res, next) => {
         verifyPreLoginChallenges(req); // vuln-code-snippet hide-line
-        models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND password = '${security.hash(req.body.password || '')}' AND deletedAt IS NULL`, { model: user_1.UserModel, plain: true }) // vuln-code-snippet vuln-line loginAdminChallenge loginBenderChallenge loginJimChallenge
+        models.sequelize.query(`SELECT * FROM Users WHERE email = '${req.body.email || ''}' AND deletedAt IS NULL`, 
+            { model: user_1.UserModel, plain: true }) // Fetch user by email
             .then((authenticatedUser) => {
-            const user = utils.queryResultToJson(authenticatedUser);
-            if (user.data?.id && user.data.totpSecret !== '') {
-                res.status(401).json({
-                    status: 'totp_token_required',
-                    data: {
-                        tmpToken: security.authorize({
-                            userId: user.data.id,
-                            type: 'password_valid_needs_second_factor_token'
-                        })
+                const user = utils.queryResultToJson(authenticatedUser);
+        
+                if (user.data?.id) {
+                    // Compare the hashed password in the database with the provided password
+                    const passwordMatch = bcrypt_1.default.compareSync(req.body.password || '', user.data.password);
+        
+                    if (passwordMatch) {
+                        if (user.data.totpSecret !== '') {
+                            res.status(401).json({
+                                status: 'totp_token_required',
+                                data: {
+                                    tmpToken: security.authorize({
+                                        userId: user.data.id,
+                                        type: 'password_valid_needs_second_factor_token'
+                                    })
+                                }
+                            });
+                        } else {
+                            // @ts-expect-error FIXME some properties missing in user - vuln-code-snippet hide-line
+                            afterLogin(user, res, next);
+                        }
+                    } else {
+                        res.status(401).send(res.__('Invalid email or password.'));
                     }
-                });
-            }
-            else if (user.data?.id) {
-                // @ts-expect-error FIXME some properties missing in user - vuln-code-snippet hide-line
-                afterLogin(user, res, next);
-            }
-            else {
-                res.status(401).send(res.__('Invalid email or password.'));
-            }
-        }).catch((error) => {
-            next(error);
-        });
+                } else {
+                    res.status(401).send(res.__('Invalid email or password.'));
+                }
+            }).catch((error) => {
+                next(error);
+            });
     };
     // vuln-code-snippet end loginAdminChallenge loginBenderChallenge loginJimChallenge
     function verifyPreLoginChallenges(req) {

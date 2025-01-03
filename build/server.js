@@ -183,9 +183,28 @@ void collectDurationPromise('validateConfig', validateConfig_1.default)({});
     app.locals.abused_ssrf_bug = false;
     /* Compression for all requests */
     app.use(compression());
+
     /* Bludgeon solution for possible CORS problems: Allow everything! */
-    app.options('*', cors());
-    app.use(cors());
+    //app.options('*', cors());
+
+    const corsOptions = {
+        origin: (origin, callback) => {
+            const allowedOrigins = ['http://localhost:3000'];
+            if (allowedOrigins.includes(origin) || !origin) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS').message);
+            }
+        },
+        methods: ['GET', 'POST', 'PUT', 'DELETE'],
+        credentials: true 
+    };
+
+
+    app.use(cors(corsOptions));
+
+
+    // app.use(cors());
     /* Security middleware */
     app.use(helmet.noSniff());
     app.use(helmet.frameguard());
@@ -261,9 +280,9 @@ void collectDurationPromise('validateConfig', validateConfig_1.default)({});
     };
     // vuln-code-snippet start directoryListingChallenge accessLogDisclosureChallenge
     /* /ftp directory browsing and file download */ // vuln-code-snippet neutral-line directoryListingChallenge
-    app.use('/ftp', serveIndexMiddleware, serveIndex('ftp', { icons: true })); // vuln-code-snippet vuln-line directoryListingChallenge
-    app.use('/ftp(?!/quarantine)/:file', fileServer()); // vuln-code-snippet vuln-line directoryListingChallenge
-    app.use('/ftp/quarantine/:file', quarantineServer()); // vuln-code-snippet neutral-line directoryListingChallenge
+    // app.use('/ftp', serveIndexMiddleware, serveIndex('ftp', { icons: true })); // vuln-code-snippet vuln-line directoryListingChallenge
+    // app.use('/ftp(?!/quarantine)/:file', fileServer()); // vuln-code-snippet vuln-line directoryListingChallenge
+    // app.use('/ftp/quarantine/:file', quarantineServer()); // vuln-code-snippet neutral-line directoryListingChallenge
     app.use('/.well-known', serveIndexMiddleware, serveIndex('.well-known', { icons: true, view: 'details' }));
     app.use('/.well-known', express.static('.well-known'));
     /* /encryptionkeys directory browsing */
@@ -688,3 +707,14 @@ exports.close = close;
 process.on('SIGINT', () => { close(0); });
 process.on('SIGTERM', () => { close(0); });
 //# sourceMappingURL=server.js.map
+
+const https = require('https');
+const options = {
+  key: fs.readFileSync('./ssl/localhost.key'),
+  cert: fs.readFileSync('./ssl/localhost.crt')
+};
+
+
+https.createServer(options, app).listen(8000, () => {
+    console.log('Juice Shop is running on https://localhost:8000');
+  });
